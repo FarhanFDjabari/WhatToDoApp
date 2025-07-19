@@ -1,0 +1,83 @@
+CREATE TABLE TaskTable (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    taskname TEXT NOT NULL,
+    duedate INTEGER NOT NULL,
+    is_completed INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE INDEX idx_task_duedate ON TaskTable (duedate);
+
+CREATE INDEX idx_task_is_completed ON TaskTable (is_completed);
+
+CREATE INDEX idx_task_taskname ON TaskTable (taskname);
+
+CREATE VIEW TaskWithCompletionStatus AS
+SELECT
+    id,
+    taskname,
+    duedate,
+    is_completed
+FROM
+    TaskTable;
+
+CREATE VIEW TasksByDueDateDesc AS
+SELECT
+    id,
+    taskname,
+    duedate,
+    is_completed
+FROM
+    TaskTable
+ORDER BY
+    duedate DESC;
+
+CREATE VIEW TasksByDueCompletionStatus AS
+SELECT
+    id,
+    taskname,
+    duedate,
+    is_completed
+FROM
+    TaskTable
+ORDER BY
+    is_completed DESC, duedate DESC;
+
+getLastInsertedTask:
+SELECT * FROM TaskWithCompletionStatus
+ORDER BY id DESC
+LIMIT 1;
+
+getAllTasksByCompletedStatus:
+SELECT * FROM TaskWithCompletionStatus
+WHERE taskname LIKE '%' || :searchQuery || '%' AND is_completed = :is_completed;
+
+getTasksByDueDateDesc:
+SELECT * FROM TasksByDueDateDesc
+WHERE taskname LIKE '%' || :searchQuery || '%';
+
+getTasksByDueCompletionStatus:
+SELECT * FROM TasksByDueCompletionStatus
+WHERE taskname LIKE '%' || :searchQuery || '%';
+
+saveTask:
+INSERT INTO TaskTable (taskname, duedate, is_completed)
+VALUES (:taskname, :duedate, :is_completed);
+
+updateTask:
+UPDATE TaskTable
+SET taskname = COALESCE(:taskname, taskname),
+    duedate = COALESCE(:duedate, duedate),
+    is_completed = COALESCE(:is_completed, is_completed)
+WHERE id = :id;
+
+deleteTask:
+DELETE FROM TaskTable
+WHERE id = :id;
+
+getTaskById:
+SELECT * FROM TaskWithCompletionStatus
+WHERE id = :id
+LIMIT 1;
+
+clearTasks:
+DELETE FROM TaskTable;
